@@ -76,7 +76,7 @@ public class SecurityTests {
         
         Jwt jwtWithoutRoles = Jwt.withTokenValue("nonstaff-test-token")
             .header("alg", "RS256")
-            .subject("nonstaff-test-token")
+            .subject("nonstaff-test-subject")
             .claim("scope", "openid")
             .build();
 
@@ -85,7 +85,7 @@ public class SecurityTests {
         mockMvc.perform(get("/api/me")
             .header("Authorization", "Bearer nonstaff-test-token"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.subject").value("nonstaff-test-token"))
+            .andExpect(jsonPath("$.subject").value("nonstaff-test-subject"))
             .andExpect(jsonPath("$.authorities").value(hasItem("SCOPE_openid")))
             .andExpect(jsonPath("$.authorities").value(not(hasItem("ROLE_STAFF"))));
     }

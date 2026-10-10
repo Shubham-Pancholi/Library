@@ -29,9 +29,9 @@ Validate Configuration and Start Application:
 The script starts PostgreSQL and Keycloak, waits for PostgreSQL's health check and Keycloak's realm endpoint, then starts the Spring Application.
 
 Endpoints:
--Application: http://localhost:8080
--Keycloak: http://localhost:8081
--PostgreSQL: localhost:5432
+- Application: http://localhost:8080
+- Keycloak: http://localhost:8081
+- PostgreSQL: localhost:5432
 
 Smoke check: run this smoke check in a second terminal while Spring app is running.
 
@@ -67,7 +67,7 @@ Named database volumes are preserved even after turning off the containers. The 
 
 ## Run Tests
 
-Run the test wiht Docker running, because the tests use Testcontainers:
+Run the test with Docker running, because the tests use Testcontainers:
 
 ```bash
 ./mvnw --batch-mode --no-transfer-progress verify

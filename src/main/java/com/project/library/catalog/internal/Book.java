@@ -24,6 +24,9 @@ public class Book {
     }
 
     public Book(String aTitle) {
+        if (aTitle == null || aTitle.isBlank()) {
+            throw new IllegalArgumentException("Invalid title value.");
+        }
         title = aTitle;
     }
 

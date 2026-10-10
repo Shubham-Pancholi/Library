@@ -32,6 +32,8 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: ${KEYCLOAK_DB_USERNAME}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KEYCLOAK_STAFF_DEMO_PASSWORD: ${KEYCLOAK_STAFF_DEMO_PASSWORD}
+      KEYCLOAK_NONSTAFF_DEMO_PASSWORD: ${KEYCLOAK_NONSTAFF_DEMO_PASSWORD}
     volumes:
       - ./docker/keycloak:/opt/keycloak/data/import:ro
     depends_on:

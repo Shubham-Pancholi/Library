@@ -1,6 +1,42 @@
 {
   "id": "6e703560-f8cb-4134-a3b8-4d525391c0bd",
   "realm": "library",
+  "users" :[
+    {
+      "username": "staff-demo",
+      "enabled": true,
+      "firstName": "Demo",
+      "lastName": "Librarian",
+      "email": "staff-demo@example.com",
+      "emailVerified": true,
+      "realmRoles": ["STAFF"],
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_STAFF_DEMO_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "nonstaff-demo",
+      "enabled": true,
+      "firstName": "Demo",
+      "lastName": "Reader",
+      "email": "nonstaff-demo@example.com",
+      "emailVerified": true,
+      "realmRoles": [],
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_NONSTAFF_DEMO_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ],
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,

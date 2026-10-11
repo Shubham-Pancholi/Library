@@ -49,7 +49,7 @@ client: library-cli
 | Username | Staff access | Password variable |
 | --- | --- | --- |
 | staff-demo | Yes | KEYCLOAK_STAFF_DEMO_PASSWORD |
-| nonstaff-demo | No | KEYCLOAK_NONSTAFF_DEMO_PASSWORD |
+| user-demo | No | KEYCLOAK_NONSTAFF_DEMO_PASSWORD |
 
 > **Note:** Keycloak's startup import skips existing realms. Modifying the import file or demo password variables will not update the existing users.
 

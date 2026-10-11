@@ -25,16 +25,19 @@ public class CatalogServiceTests {
     private final BookRepository bookRepository;
     private final CatalogApi catalogApi;
     private final EntityManager entityManager;
+    private final CatalogService catalogService;
 
     @Autowired 
     public CatalogServiceTests(
         BookRepository aBookRepository,
         CatalogApi aCatalogApi,
-        EntityManager aEntityManager
+        EntityManager aEntityManager,
+        CatalogService aCatalogService
     ) {
         bookRepository = aBookRepository;
         catalogApi = aCatalogApi;
         entityManager = aEntityManager;
+        catalogService = aCatalogService;
     }
 
     @Test 
@@ -53,5 +56,22 @@ public class CatalogServiceTests {
     public void returnsEmptyForUnknownBook() {
         Optional<BookDetails> result = catalogApi.findBook(UUID.randomUUID());
         assertThat(result).isEmpty();
+    }
+
+    @Test 
+    public void createsAndPersistsBook() {
+        String title = "The Hobbit";
+        BookDetails createdBook = catalogService.createBook(title);
+
+        assertThat(createdBook.id()).isNotNull();
+        assertThat(createdBook.title()).isEqualTo(title);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Book reloadedBook = bookRepository.findById(createdBook.id()).orElseThrow();
+
+        assertThat(reloadedBook.getId()).isEqualTo(createdBook.id());
+        assertThat(reloadedBook.getTitle()).isEqualTo(title);
     }
 }

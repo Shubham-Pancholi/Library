@@ -24,4 +24,13 @@ public class CatalogService implements CatalogApi{
         return bookRepository.findById(id)
                 .map(book -> new BookDetails(book.getId(), book.getTitle()));
     }
+
+    @Transactional 
+    public BookDetails createBook(String title) {
+        Book book = new Book(title);
+
+        Book savedBook = bookRepository.save(book);
+
+        return new BookDetails(savedBook.getId(), savedBook.getTitle());
+    }
 }

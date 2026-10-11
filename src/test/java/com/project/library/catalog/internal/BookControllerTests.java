@@ -90,4 +90,23 @@ public class BookControllerTests {
 
         verifyNoInteractions(catalogApi, jwtDecoder);
     }
+
+    @Test 
+    public void authenticatedReaderGets400ForInvalidBookId() throws Exception {
+        
+        Jwt readerJwt = Jwt.withTokenValue("reader-test-token")
+            .header("alg", "RS256")
+            .subject("reader-test-subject")
+            .claim("scope", "openid")
+            .claim("realm_access", Map.of("roles", List.of()))
+            .build();
+
+        when(jwtDecoder.decode("reader-test-token")).thenReturn(readerJwt);
+
+        mockMvc.perform(get("/api/books/{bookId}", "not-a-uuid")
+                .header("Authorization", "Bearer reader-test-token"))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(catalogApi);
+    }
 }

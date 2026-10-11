@@ -20,11 +20,11 @@
       ]
     },
     {
-      "username": "nonstaff-demo",
+      "username": "user-demo",
       "enabled": true,
       "firstName": "Demo",
       "lastName": "Reader",
-      "email": "nonstaff-demo@example.com",
+      "email": "user-demo@example.com",
       "emailVerified": true,
       "realmRoles": [],
       "requiredActions": [],

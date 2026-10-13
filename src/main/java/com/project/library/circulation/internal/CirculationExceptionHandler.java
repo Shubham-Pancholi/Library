@@ -16,4 +16,11 @@ public class CirculationExceptionHandler {
     ) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
+
+    @ExceptionHandler (DuplicateCopyIdentifierException.class)
+    public ProblemDetail handleDuplicateIdentifier(
+        DuplicateCopyIdentifierException exception
+    ) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
 }

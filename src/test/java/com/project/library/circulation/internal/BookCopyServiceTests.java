@@ -15,6 +15,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -137,5 +138,41 @@ public class BookCopyServiceTests {
             .isInstanceOf(AccessDeniedException.class);
 
         verifyNoInteractions(catalogApi);
+    }
+
+    @Test 
+    @WithMockUser (roles = "STAFF")
+    public void duplicateAccessionNumbersAreRejected() {
+        UUID catalogBookId = UUID.randomUUID();
+        when(catalogApi.findBook(catalogBookId)).thenReturn(Optional.of(new BookDetails(catalogBookId, "The Hobbit")));
+
+        BookCopyDetails bookCopy = bookCopyService.createCopy(catalogBookId, "ACC-001", "BC-001", CirculationType.ARCHIVE);
+
+        assertThat(bookCopy.id()).isNotNull();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThatThrownBy(() -> bookCopyService.createCopy(catalogBookId, "ACC-001", "BC-002", CirculationType.STAFF_ONLY))
+            .isInstanceOfAny(DuplicateCopyIdentifierException.class)
+            .hasMessage("Accession Number is already in use");
+    }
+
+    @Test 
+    @WithMockUser (roles = "STAFF")
+    public void duplicateBarcodesAreRejected() {
+        UUID catalogBookId = UUID.randomUUID();
+        when(catalogApi.findBook(catalogBookId)).thenReturn(Optional.of(new BookDetails(catalogBookId, "The Hobbit")));
+
+        BookCopyDetails bookCopy = bookCopyService.createCopy(catalogBookId, "ACC-001", "BC-001", CirculationType.CIRCULATING);
+
+        assertThat(bookCopy.id()).isNotNull();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThatThrownBy(() -> bookCopyService.createCopy(catalogBookId, "ACC-02", "BC-001", CirculationType.REFERENCE_ONLY))
+            .isInstanceOfAny(DuplicateCopyIdentifierException.class)
+            .hasMessage("Barcode is already in use");
     }
 }

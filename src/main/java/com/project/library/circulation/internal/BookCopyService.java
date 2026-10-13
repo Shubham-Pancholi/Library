@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.project.library.catalog.CatalogApi;
 
@@ -28,9 +30,28 @@ public class BookCopyService {
 
         catalogApi.findBook(catalogBookId).orElseThrow(() -> new CatalogBookNotFoundException(catalogBookId));
 
-        BookCopy savedCopy = bookCopyRepository.save(copy);
+        try {
+            BookCopy savedCopy = bookCopyRepository.saveAndFlush(copy);
 
-        return toDetails(savedCopy);
+            return toDetails(savedCopy);
+        }   catch(DataIntegrityViolationException exception) {
+            duplicateIdentifier(exception)
+            .ifPresent(i -> { throw new DuplicateCopyIdentifierException(i, exception); });
+
+            throw exception;
+        }
+    }
+
+    private Optional<String> duplicateIdentifier(Throwable exception) {
+        for (Throwable cause = exception; cause != null ; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException cve) {
+                if ("23505".equals(cve.getSQLState())) {
+                    if ("book_copy_accession_number_key".equals(cve.getConstraintName())) return Optional.of("Accession Number");
+                    if ("book_copy_barcode_key".equals(cve.getConstraintName())) return Optional.of("Barcode");
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     @Transactional (readOnly = true)

@@ -228,4 +228,80 @@ public class StaffBookCopyControllerTests {
             )
             .andExpect(status().isNotFound());
     }
+
+    @Test 
+    public void duplicateAccessionNumbersGive409() throws Exception {
+        UUID catalogBookId = UUID.randomUUID();
+        String accesstionNumber = "ACC-001";
+        String barcode = "BC-001";
+        CirculationType circulationType = CirculationType.ARCHIVE;
+
+        Jwt staffJwt = Jwt.withTokenValue("staff-test-token")
+                        .header("alg", "RS256")
+                        .subject("staff-test-subject")
+                        .claim("scope", "openid")
+                        .claim("realm_access", Map.of("roles", List.of("STAFF")))
+                        .build();
+
+        when(jwtDecoder.decode("staff-test-token")).thenReturn(staffJwt);
+        when(bookCopyService.createCopy(catalogBookId, accesstionNumber, barcode, circulationType)).thenThrow(new DuplicateCopyIdentifierException("Accession Number", new RuntimeException("test cause")));
+
+        mockMvc.perform(
+                post("/api/staff/copies")
+                .header("Authorization", "Bearer staff-test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "catalogBookId": "%s",
+                            "accessionNumber": "ACC-001",
+                            "barcode": "BC-001",
+                            "circulationType": "ARCHIVE"
+                        }
+                        """.formatted(catalogBookId))
+            )
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.detail").value("Accession Number is already in use"))
+            .andExpect(jsonPath("$.status").value(409))
+            .andExpect(content().contentTypeCompatibleWith(
+                MediaType.APPLICATION_PROBLEM_JSON
+            ));
+    }
+
+    @Test 
+    public void duplicateBarcodesGive409() throws Exception {
+        UUID catalogBookId = UUID.randomUUID();
+        String accesstionNumber = "ACC-001";
+        String barcode = "BC-001";
+        CirculationType circulationType = CirculationType.ARCHIVE;
+
+        Jwt staffJwt = Jwt.withTokenValue("staff-test-token")
+                        .header("alg", "RS256")
+                        .subject("staff-test-subject")
+                        .claim("scope", "openid")
+                        .claim("realm_access", Map.of("roles", List.of("STAFF")))
+                        .build();
+
+        when(jwtDecoder.decode("staff-test-token")).thenReturn(staffJwt);
+        when(bookCopyService.createCopy(catalogBookId, accesstionNumber, barcode, circulationType)).thenThrow(new DuplicateCopyIdentifierException("Barcode", new RuntimeException("test cause")));
+
+        mockMvc.perform(
+                post("/api/staff/copies")
+                .header("Authorization", "Bearer staff-test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "catalogBookId": "%s",
+                            "accessionNumber": "ACC-001",
+                            "barcode": "BC-001",
+                            "circulationType": "ARCHIVE"
+                        }
+                        """.formatted(catalogBookId))
+            )
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.detail").value("Barcode is already in use"))
+            .andExpect(jsonPath("$.status").value(409))
+            .andExpect(content().contentTypeCompatibleWith(
+                MediaType.APPLICATION_PROBLEM_JSON
+            ));
+    }
 }

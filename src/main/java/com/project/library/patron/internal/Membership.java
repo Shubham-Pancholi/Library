@@ -74,4 +74,10 @@ public class Membership {
     public MembershipStatus getMembershipStatus() {
         return membershipStatus;
     }
+
+    public boolean isValidAt(Instant instant) {
+        if (instant == null) throw new IllegalArgumentException("Supplied Instant var is null");
+        if (MembershipStatus.ACTIVE.equals(membershipStatus) && !instant.isBefore(startsAt) && instant.isBefore(endsAt)) return true;
+        return false;
+    }
 }

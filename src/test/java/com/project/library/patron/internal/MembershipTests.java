@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class MembershipTests {
 
@@ -112,5 +113,60 @@ public class MembershipTests {
 
         assertThatThrownBy(() -> new Membership(patronId, planVersionId, startsAt, endsAt, status))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test 
+    public void rejectsNullValidationInstant() {
+        UUID patronId = UUID.randomUUID();
+        UUID planVersionId = UUID.randomUUID();
+        Instant startsAt = Instant.parse("2026-01-01T00:00:00Z");
+        Instant endsAt = Instant.parse("2027-01-01T00:00:00Z");
+        MembershipStatus status = MembershipStatus.ACTIVE;
+
+        Membership membership = new Membership(patronId, planVersionId, startsAt, endsAt, status);
+
+        assertThatThrownBy(() -> membership.isValidAt(null))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @ParameterizedTest 
+    @ValueSource (strings = {"2026-01-01T00:00:00Z","2026-12-31T23:59:59Z"})
+    public void validInstantForValidationReturnsTrue(String instantString) {
+        UUID patronId = UUID.randomUUID();
+        UUID planVersionId = UUID.randomUUID();
+        Instant startsAt = Instant.parse("2026-01-01T00:00:00Z");
+        Instant endsAt = Instant.parse("2027-01-01T00:00:00Z");
+        MembershipStatus status = MembershipStatus.ACTIVE;
+
+        Membership membership = new Membership(patronId, planVersionId, startsAt, endsAt, status);
+        
+        assertThat(membership.isValidAt(Instant.parse(instantString))).isEqualTo(true);
+    }
+
+    @ParameterizedTest 
+    @ValueSource (strings = {"2025-12-31T23:59:59Z","2027-01-01T00:00:00Z", "2027-01-01T00:00:01Z"})
+    public void invalidInstantForValidationReturnsFalse(String instantString) {
+        UUID patronId = UUID.randomUUID();
+        UUID planVersionId = UUID.randomUUID();
+        Instant startsAt = Instant.parse("2026-01-01T00:00:00Z");
+        Instant endsAt = Instant.parse("2027-01-01T00:00:00Z");
+        MembershipStatus status = MembershipStatus.ACTIVE;
+
+        Membership membership = new Membership(patronId, planVersionId, startsAt, endsAt, status);
+        
+        assertThat(membership.isValidAt(Instant.parse(instantString))).isEqualTo(false);
+    }
+
+    @Test 
+    public void cancelledStatusForValidInstantReturnsFalse() {
+        UUID patronId = UUID.randomUUID();
+        UUID planVersionId = UUID.randomUUID();
+        Instant startsAt = Instant.parse("2026-01-01T00:00:00Z");
+        Instant endsAt = Instant.parse("2027-01-01T00:00:00Z");
+        MembershipStatus status = MembershipStatus.CANCELLED;
+
+        Membership membership = new Membership(patronId, planVersionId, startsAt, endsAt, status);
+
+        assertThat(membership.isValidAt(Instant.parse("2026-06-06T00:00:00Z"))).isEqualTo(false);
     }
 }

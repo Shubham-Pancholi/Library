@@ -43,6 +43,8 @@ public class PatronRepositoryTests {
         assertThat(reloadedPatron.getFirstName()).isEqualTo("Asha");
         assertThat(reloadedPatron.getLastName()).isNull();
         assertThat(reloadedPatron.getPhone()).isNull();
+        assertThat(reloadedPatron.isAdministrativelyBlocked()).isFalse();
+        assertThat(reloadedPatron.getAdministrativeBlockReason()).isNull();
     }
 
     @Test 
@@ -62,5 +64,34 @@ public class PatronRepositoryTests {
         assertThat(reloadedPatron.getFirstName()).isEqualTo("Asha");
         assertThat(reloadedPatron.getLastName()).isEqualTo("Rao");
         assertThat(reloadedPatron.getPhone()).isEqualTo("0987654321");
+        assertThat(reloadedPatron.isAdministrativelyBlocked()).isFalse();
+        assertThat(reloadedPatron.getAdministrativeBlockReason()).isNull();
+    }
+
+    @Test 
+    public void blockMechanismTests() {
+        Patron patron = new Patron(PatronType.MEMBER, "FName", null, null);
+
+        UUID patronId = patronRepository.save(patron).getId();
+
+        patron.blockAdministratively("Testing");
+
+        patronRepository.flush();
+        entityManager.clear();
+
+        Patron loadedPatron = patronRepository.findById(patronId).orElseThrow();
+
+        assertThat(loadedPatron.isAdministrativelyBlocked()).isTrue();
+        assertThat(loadedPatron.getAdministrativeBlockReason()).isNotNull().isEqualTo("Testing");
+
+        loadedPatron.clearAdministrativeBlock();
+
+        patronRepository.flush();
+        entityManager.clear();
+
+        Patron reloadedPatron = patronRepository.findById(patronId).orElseThrow();
+
+        assertThat(reloadedPatron.isAdministrativelyBlocked()).isFalse();
+        assertThat(reloadedPatron.getAdministrativeBlockReason()).isNull();
     }
 }

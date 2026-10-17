@@ -1,6 +1,9 @@
 package com.project.library.patron.internal;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,5 +48,60 @@ public class PatronTests {
     public void throwExceptionWhenPassedInvalidFirstName() {
         assertThatThrownBy(() -> new Patron(PatronType.MEMBER, "\t\n", "Rao", "0011001100"))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test 
+    public void passedValidBlockingValues() {
+        String reason = "Testing";
+
+        Patron patron = new Patron(PatronType.MEMBER, "FName", "LName", "0");
+
+        assertThat(patron.isAdministrativelyBlocked()).isFalse();
+        assertThat(patron.getAdministrativeBlockReason()).isNull();
+
+        patron.blockAdministratively(reason);
+
+        assertThat(patron.isAdministrativelyBlocked()).isTrue();
+        assertThat(patron.getAdministrativeBlockReason()).isNotNull().isEqualTo(reason);
+
+        patron.clearAdministrativeBlock();
+
+        assertThat(patron.isAdministrativelyBlocked()).isFalse();
+        assertThat(patron.getAdministrativeBlockReason()).isNull();
+    }
+
+    @ParameterizedTest 
+    @NullAndEmptySource 
+    @ValueSource (strings = {" ","\t\n"})
+    public void passedInvalidBlockingReasonsThrows(String reason) {
+        Patron patron = new Patron(PatronType.MEMBER, "FName", "LName", "0");
+
+        assertThatThrownBy(() -> patron.blockAdministratively(reason))
+            .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(patron.isAdministrativelyBlocked()).isFalse();
+        assertThat(patron.getAdministrativeBlockReason()).isNull();
+    }
+
+    @Test 
+    public void invalidBlockingOperationsThrows() {
+        Patron patron = new Patron(PatronType.MEMBER, "FName", "LName", "0");
+
+        assertThatThrownBy(() -> patron.clearAdministrativeBlock())
+            .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(patron.isAdministrativelyBlocked()).isFalse();
+        assertThat(patron.getAdministrativeBlockReason()).isNull();
+        
+        String reason1 = "Testing";
+        String reason2 = "Error Handling";
+
+        patron.blockAdministratively(reason1);
+
+        assertThatThrownBy(() -> patron.blockAdministratively(reason2))
+            .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(patron.isAdministrativelyBlocked()).isTrue();
+        assertThat(patron.getAdministrativeBlockReason()).isEqualTo(reason1);
     }
 }

@@ -32,6 +32,12 @@ public class Patron {
     @Column (columnDefinition = "text")
     private String phone;
 
+    @Column (name = "administrative_block", nullable = false)
+    private boolean administrativeBlock;
+
+    @Column (name = "administrative_block_reason", columnDefinition = "text", nullable = true)
+    private String administrativeBlockReason;
+
     protected Patron() {
     }
 
@@ -69,5 +75,34 @@ public class Patron {
 
     public String getPhone() {
         return phone;
+    }
+
+    public boolean isAdministrativelyBlocked() {
+        return administrativeBlock;
+    }
+
+    public String getAdministrativeBlockReason() {
+        return administrativeBlockReason;
+    }
+
+    public void blockAdministratively(String reason) {
+        if (isAdministrativelyBlocked()) {
+            throw new IllegalArgumentException("Invalid Blocking operation: patron already blocked");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Invalid block reason value.");
+        }
+
+        administrativeBlock = true;
+        administrativeBlockReason = reason;
+    }
+
+    public void clearAdministrativeBlock() {
+        if (!isAdministrativelyBlocked()) {
+            throw new IllegalArgumentException("Invalid Blocking operation: patron is not blocked");
+        }
+
+        administrativeBlock = false;
+        administrativeBlockReason = null;
     }
 }

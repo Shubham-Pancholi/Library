@@ -87,7 +87,7 @@ public class Patron {
 
     public void blockAdministratively(String reason) {
         if (isAdministrativelyBlocked()) {
-            throw new IllegalArgumentException("Invalid Blocking operation: patron already blocked");
+            throw new AdministrativeBlockConflictException("Invalid Blocking operation: patron already blocked");
         }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Invalid block reason value.");
@@ -99,7 +99,7 @@ public class Patron {
 
     public void clearAdministrativeBlock() {
         if (!isAdministrativelyBlocked()) {
-            throw new IllegalArgumentException("Invalid Blocking operation: patron is not blocked");
+            throw new AdministrativeBlockConflictException("Invalid Blocking operation: patron is not blocked");
         }
 
         administrativeBlock = false;

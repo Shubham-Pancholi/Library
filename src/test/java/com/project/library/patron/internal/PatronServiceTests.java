@@ -211,7 +211,7 @@ public class PatronServiceTests {
         entityManager.clear();
 
         assertThatThrownBy(() -> patronService.blockPatron(id, "Reason B"))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(AdministrativeBlockConflictException.class);
 
         entityManager.flush();
         entityManager.clear();
@@ -383,7 +383,7 @@ public class PatronServiceTests {
         entityManager.clear();
 
         assertThatThrownBy(() -> patronService.clearPatronBlock(id, "Loan paid"))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(AdministrativeBlockConflictException.class);
 
         entityManager.flush();
         entityManager.clear();

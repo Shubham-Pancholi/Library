@@ -117,7 +117,7 @@ public class PatronBlockConcurrencyTest {
             assertThat(start.await(10, TimeUnit.SECONDS)).isTrue();
             patronService.blockPatron(patronId, reason);
                 return true;
-        }   catch (IllegalArgumentException exception) {
+        }   catch (AdministrativeBlockConflictException exception) {
                 assertThat(exception.getMessage()).isEqualTo("Invalid Blocking operation: patron already blocked");
                 return false;
         }   finally {
@@ -199,7 +199,7 @@ public class PatronBlockConcurrencyTest {
             assertThatThrownBy(() -> future2.get(10, TimeUnit.SECONDS))
                 .isInstanceOf(ExecutionException.class)
                 .cause()
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AdministrativeBlockConflictException.class)
                 .hasMessage("Invalid Blocking operation: patron already blocked");
 
             Patron committedPatron = patronRepository.findById(patronId).orElseThrow();

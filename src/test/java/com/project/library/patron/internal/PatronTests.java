@@ -88,7 +88,7 @@ public class PatronTests {
         Patron patron = new Patron(PatronType.MEMBER, "FName", "LName", "0");
 
         assertThatThrownBy(() -> patron.clearAdministrativeBlock())
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(AdministrativeBlockConflictException.class);
 
         assertThat(patron.isAdministrativelyBlocked()).isFalse();
         assertThat(patron.getAdministrativeBlockReason()).isNull();
@@ -99,7 +99,7 @@ public class PatronTests {
         patron.blockAdministratively(reason1);
 
         assertThatThrownBy(() -> patron.blockAdministratively(reason2))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(AdministrativeBlockConflictException.class);
 
         assertThat(patron.isAdministrativelyBlocked()).isTrue();
         assertThat(patron.getAdministrativeBlockReason()).isEqualTo(reason1);

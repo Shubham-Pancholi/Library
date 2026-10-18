@@ -37,4 +37,22 @@ public class StaffPatronController {
     ) {
         return ResponseEntity.of(patronService.findPatron(id));
     }
+
+    @PostMapping ("/{id}/administrative-block")
+    public ResponseEntity<Void> blockPatron(
+        @PathVariable UUID id,
+        @Valid @RequestBody AdministrativeBlockActionRequest request
+    ) {
+        patronService.blockPatron(id, request.reason());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping ("/{id}/administrative-block/clear")
+    public ResponseEntity<Void> clearPatronBlock(
+        @PathVariable UUID id,
+        @Valid @RequestBody AdministrativeBlockActionRequest request
+    ) {
+        patronService.clearPatronBlock(id, request.reason());
+        return ResponseEntity.noContent().build();
+    }
 }

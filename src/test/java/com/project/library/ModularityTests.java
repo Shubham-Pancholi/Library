@@ -17,7 +17,7 @@ public class ModularityTests {
                          .map(module -> module.getIdentifier().toString())
                          .collect(Collectors.toSet());
 
-        assertEquals(Set.of("catalog", "circulation", "patron", "billing", "notification"), set);
+        assertEquals(Set.of("catalog", "circulation", "contracts","patron", "billing", "notification"), set);
 
         modules.verify();
     }

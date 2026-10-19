@@ -38,6 +38,9 @@ public class Patron {
     @Column (name = "administrative_block_reason", columnDefinition = "text", nullable = true)
     private String administrativeBlockReason;
 
+    @Column (name = "eligibility_version", nullable = false)
+    private long eligibilityVersion;
+
     protected Patron() {
     }
 
@@ -95,6 +98,7 @@ public class Patron {
 
         administrativeBlock = true;
         administrativeBlockReason = reason;
+        eligibilityVersion++;
     }
 
     public void clearAdministrativeBlock() {
@@ -104,5 +108,10 @@ public class Patron {
 
         administrativeBlock = false;
         administrativeBlockReason = null;
+        eligibilityVersion++;
+    }
+
+    public long getEligibilityVersion() {
+        return eligibilityVersion;
     }
 }

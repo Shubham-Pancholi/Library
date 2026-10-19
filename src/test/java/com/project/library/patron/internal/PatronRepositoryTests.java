@@ -45,6 +45,7 @@ public class PatronRepositoryTests {
         assertThat(reloadedPatron.getPhone()).isNull();
         assertThat(reloadedPatron.isAdministrativelyBlocked()).isFalse();
         assertThat(reloadedPatron.getAdministrativeBlockReason()).isNull();
+        assertThat(reloadedPatron.getEligibilityVersion()).isEqualTo(0);
     }
 
     @Test 
@@ -66,6 +67,7 @@ public class PatronRepositoryTests {
         assertThat(reloadedPatron.getPhone()).isEqualTo("0987654321");
         assertThat(reloadedPatron.isAdministrativelyBlocked()).isFalse();
         assertThat(reloadedPatron.getAdministrativeBlockReason()).isNull();
+        assertThat(reloadedPatron.getEligibilityVersion()).isEqualTo(0);
     }
 
     @Test 
@@ -83,6 +85,7 @@ public class PatronRepositoryTests {
 
         assertThat(loadedPatron.isAdministrativelyBlocked()).isTrue();
         assertThat(loadedPatron.getAdministrativeBlockReason()).isNotNull().isEqualTo("Testing");
+        assertThat(loadedPatron.getEligibilityVersion()).isEqualTo(1);
 
         loadedPatron.clearAdministrativeBlock();
 
@@ -93,5 +96,6 @@ public class PatronRepositoryTests {
 
         assertThat(reloadedPatron.isAdministrativelyBlocked()).isFalse();
         assertThat(reloadedPatron.getAdministrativeBlockReason()).isNull();
+        assertThat(reloadedPatron.getEligibilityVersion()).isEqualTo(2);
     }
 }

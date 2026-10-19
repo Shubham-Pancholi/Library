@@ -63,11 +63,13 @@ public class PatronTests {
 
         assertThat(patron.isAdministrativelyBlocked()).isTrue();
         assertThat(patron.getAdministrativeBlockReason()).isNotNull().isEqualTo(reason);
+        assertThat(patron.getEligibilityVersion()).isEqualTo(1);
 
         patron.clearAdministrativeBlock();
 
         assertThat(patron.isAdministrativelyBlocked()).isFalse();
         assertThat(patron.getAdministrativeBlockReason()).isNull();
+        assertThat(patron.getEligibilityVersion()).isEqualTo(2);
     }
 
     @ParameterizedTest 
@@ -81,6 +83,7 @@ public class PatronTests {
 
         assertThat(patron.isAdministrativelyBlocked()).isFalse();
         assertThat(patron.getAdministrativeBlockReason()).isNull();
+        assertThat(patron.getEligibilityVersion()).isEqualTo(0);
     }
 
     @Test 
@@ -92,16 +95,20 @@ public class PatronTests {
 
         assertThat(patron.isAdministrativelyBlocked()).isFalse();
         assertThat(patron.getAdministrativeBlockReason()).isNull();
-        
+        assertThat(patron.getEligibilityVersion()).isEqualTo(0);
+
         String reason1 = "Testing";
         String reason2 = "Error Handling";
 
         patron.blockAdministratively(reason1);
+
+        assertThat(patron.getEligibilityVersion()).isEqualTo(1);
 
         assertThatThrownBy(() -> patron.blockAdministratively(reason2))
             .isInstanceOf(AdministrativeBlockConflictException.class);
 
         assertThat(patron.isAdministrativelyBlocked()).isTrue();
         assertThat(patron.getAdministrativeBlockReason()).isEqualTo(reason1);
+        assertThat(patron.getEligibilityVersion()).isEqualTo(1);
     }
 }

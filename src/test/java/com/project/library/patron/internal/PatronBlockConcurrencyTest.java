@@ -78,6 +78,7 @@ public class PatronBlockConcurrencyTest {
 
             assertThat(loadedPatron.isAdministrativelyBlocked()).isTrue();
             assertThat(loadedPatron.getAdministrativeBlockReason()).isEqualTo(reason);
+            assertThat(loadedPatron.getEligibilityVersion()).isEqualTo(1);
 
             List<AdministrativeBlockHistory> patronRecords = historyRepository.findAll().stream().filter(r -> r.getPatronId().equals(patronId)).toList();
 
@@ -166,6 +167,7 @@ public class PatronBlockConcurrencyTest {
 
                 Patron uncommittedPatron = patronRepository.findById(patronId).orElseThrow();
                 assertThat(uncommittedPatron.isAdministrativelyBlocked()).isFalse();
+                assertThat(uncommittedPatron.getEligibilityVersion()).isEqualTo(0);
 
                 future2 = executor.submit(() -> {
                     createJwtStaffTokenAndAddItToContext();
@@ -205,6 +207,7 @@ public class PatronBlockConcurrencyTest {
             Patron committedPatron = patronRepository.findById(patronId).orElseThrow();
             assertThat(committedPatron.isAdministrativelyBlocked()).isTrue();
             assertThat(committedPatron.getAdministrativeBlockReason()).isEqualTo("Reason A");
+            assertThat(committedPatron.getEligibilityVersion()).isEqualTo(1);
 
             List<AdministrativeBlockHistory> patronRecords = historyRepository.findAll().stream()
                 .filter(r -> r.getPatronId().equals(patronId))

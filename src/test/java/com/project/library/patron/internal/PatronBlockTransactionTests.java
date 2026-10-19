@@ -74,6 +74,7 @@ public class PatronBlockTransactionTests {
 
             assertThat(patron2.isAdministrativelyBlocked()).isFalse();
             assertThat(patron2.getAdministrativeBlockReason()).isNull();
+            assertThat(patron2.getEligibilityVersion()).isEqualTo(0);
 
             List<AdministrativeBlockHistory> histories = historyRepository.findAll();
             List<AdministrativeBlockHistory> patronHistory = new ArrayList<>();
@@ -112,11 +113,15 @@ public class PatronBlockTransactionTests {
 
             SecurityContextHolder.getContext().setAuthentication(jwtAuthenticationToken);
 
+            assertThat(patron.getEligibilityVersion()).isEqualTo(0);
+
             patronService.blockPatron(patronId, "Reason A");
 
             List<UUID> historyIds = historyRepository.findAll().stream().filter(r -> r.getPatronId().equals(patronId)).map(r-> r.getId()).toList();
 
             assertThat(historyIds.size()).isEqualTo(1);
+            Patron afterBlock = patronRepository.findById(patronId).orElseThrow();
+            assertThat(afterBlock.getEligibilityVersion()).isEqualTo(1);
 
             history = historyIds.get(0);
 
@@ -133,6 +138,7 @@ public class PatronBlockTransactionTests {
 
             assertThat(patron2.isAdministrativelyBlocked()).isTrue();
             assertThat(patron2.getAdministrativeBlockReason()).isEqualTo("Reason A");
+            assertThat(patron2.getEligibilityVersion()).isEqualTo(1);
 
             List<AdministrativeBlockHistory> histories = historyRepository.findAll();
             List<AdministrativeBlockHistory> patronHistory = new ArrayList<>();

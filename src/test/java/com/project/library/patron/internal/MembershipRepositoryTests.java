@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -125,5 +126,59 @@ public class MembershipRepositoryTests {
 
         assertThatThrownBy(() -> membershipRepository.saveAndFlush(membership))
             .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test 
+    public void loadingAllRecordsOfPatron() {
+        Patron patronA = patronRepository.saveAndFlush(new Patron(PatronType.MEMBER, "Name", null, null));
+        Patron patronB = patronRepository.saveAndFlush(new Patron(PatronType.MEMBER, "Guest", null, null));
+
+        MembershipPlan plan = membershipPlanRepository.saveAndFlush(new MembershipPlan("plan"));
+        MembershipPlanVersion version = membershipPlanVersionRepository.saveAndFlush(new MembershipPlanVersion(plan.getId(), Instant.parse("2026-01-01T00:00:00Z"), null, 2, 14));
+
+        Membership membershipA1 = new Membership(patronA.getId(), version.getId(), Instant.parse("2026-01-01T08:00:00Z"), Instant.parse("2026-01-10T16:00:00Z"), MembershipStatus.CANCELLED);
+        Membership membershipA2 = new Membership(patronA.getId(), version.getId(), Instant.parse("2026-06-01T09:00:00Z"), Instant.parse("2026-12-10T09:00:00Z"), MembershipStatus.ACTIVE);
+
+        membershipRepository.saveAndFlush(membershipA1);
+        membershipRepository.saveAndFlush(membershipA2);
+
+        Membership membershipB1 = new Membership(patronB.getId(), version.getId(), Instant.parse("2026-05-10T16:00:00Z"), Instant.parse("2026-11-10T16:00:00Z"), MembershipStatus.ACTIVE);
+
+        membershipRepository.saveAndFlush(membershipB1);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Membership> recordsOfPatronA = membershipRepository.findByPatronId(patronA.getId());
+
+        assertThat(recordsOfPatronA.size()).isEqualTo(2);
+        assertThat(
+            recordsOfPatronA.stream().filter(r -> r.getPatronId().equals(patronA.getId())).count()
+        ).isEqualTo(2);
+        assertThat(
+            recordsOfPatronA.stream().filter(r -> r.getMembershipStatus().equals(MembershipStatus.ACTIVE)).count()
+        ).isEqualTo(1);
+    }
+
+    @Test 
+    public void loadingRecordsOfPatronWithoutMembershipReturnsEmpty() {
+        Patron patronA = patronRepository.saveAndFlush(new Patron(PatronType.MEMBER, "Name", null, null));
+        Patron patronB = patronRepository.saveAndFlush(new Patron(PatronType.VISITOR, "Guest", null, null));
+
+        MembershipPlan plan = membershipPlanRepository.saveAndFlush(new MembershipPlan("plan"));
+        MembershipPlanVersion version = membershipPlanVersionRepository.saveAndFlush(new MembershipPlanVersion(plan.getId(), Instant.parse("2026-01-01T00:00:00Z"), null, 2, 14));
+
+        Membership membershipA1 = new Membership(patronA.getId(), version.getId(), Instant.parse("2026-01-01T08:00:00Z"), Instant.parse("2026-01-10T16:00:00Z"), MembershipStatus.CANCELLED);
+        Membership membershipA2 = new Membership(patronA.getId(), version.getId(), Instant.parse("2026-06-01T09:00:00Z"), Instant.parse("2026-12-10T09:00:00Z"), MembershipStatus.ACTIVE);
+
+        membershipRepository.saveAndFlush(membershipA1);
+        membershipRepository.saveAndFlush(membershipA2);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Membership> recordsOfPatronB = membershipRepository.findByPatronId(patronB.getId());
+
+        assertThat(recordsOfPatronB.size()).isEqualTo(0);
     }
 }

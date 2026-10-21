@@ -97,4 +97,37 @@ public class PatronEligibilityProjectionRepositoryTests {
             .isInstanceOf(DataIntegrityViolationException.class)
             .hasMessageContaining("validity_membership");
     }
+
+    @Test 
+    public void saveAndReloadProjection_thenUpdateAndReloadAgain() {
+        UUID patron = UUID.randomUUID();
+        MembershipTerms membershipTerms = new MembershipTerms(UUID.randomUUID(), UUID.randomUUID(), Instant.parse("2026-06-01T12:00:00Z"), Instant.parse("2026-12-01T11:59:59Z"), 3, 21);
+        PatronEligibilitySnapshot snapshot = new PatronEligibilitySnapshot(patron, 5, false, membershipTerms);
+
+        repository.saveAndFlush(new PatronEligibilityProjection(snapshot));
+
+        entityManager.clear();
+
+        var projection = repository.findById(patron).orElseThrow();
+
+        PatronEligibilitySnapshot newSnapshot = new PatronEligibilitySnapshot(patron, 8, true, null);
+        
+        assertThat(projection.applyIfNewer(newSnapshot)).isTrue();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        var reloadedProjection = repository.findById(patron).orElseThrow();
+
+        assertThat(reloadedProjection.getPatronId()).isEqualTo(patron);
+        assertThat(reloadedProjection.getSourceVersion()).isEqualTo(8);
+        assertThat(reloadedProjection.getAdministrativeBlock()).isTrue();
+
+        assertThat(reloadedProjection.getMembershipId()).isNull();
+        assertThat(reloadedProjection.getPlanVersionId()).isNull();
+        assertThat(reloadedProjection.getValidFrom()).isNull();
+        assertThat(reloadedProjection.getValidUntil()).isNull();
+        assertThat(reloadedProjection.getMaxCopies()).isNull();
+        assertThat(reloadedProjection.getMaxDays()).isNull();
+    }
 }

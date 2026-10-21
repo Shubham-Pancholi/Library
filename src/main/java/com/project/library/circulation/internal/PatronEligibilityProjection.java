@@ -53,16 +53,7 @@ public class PatronEligibilityProjection {
         sourceVersion = snapshot.sourceVersion();
         administrativeBlock = snapshot.administrativeBlock();
 
-        if (snapshot.membership() != null) {
-            membershipId = snapshot.membership().membershipId();
-            planVersionId = snapshot.membership().planVersionId();
-
-            validFrom = snapshot.membership().validFrom();
-            validUntil = snapshot.membership().validUntil();
-
-            maxCopies = snapshot.membership().maxCopies();
-            maxDays = snapshot.membership().maxDays();
-        }
+        replaceState(snapshot);
     }
 
     public UUID getPatronId() {
@@ -99,5 +90,46 @@ public class PatronEligibilityProjection {
 
     public Integer getMaxDays() {
         return maxDays;
+    }
+
+    public boolean applyIfNewer(PatronEligibilitySnapshot snapshot) {
+        if (snapshot == null || !patronId.equals(snapshot.patronId())) {
+            throw new IllegalArgumentException("Invalid snapshot when applying a newer one to projection");
+        }
+
+        if (snapshot.sourceVersion() <= sourceVersion) return false;
+
+        replaceState(snapshot);
+
+        return true;
+    }
+
+    private void replaceState(PatronEligibilitySnapshot snapshot) {
+        sourceVersion = snapshot.sourceVersion();
+        administrativeBlock = snapshot.administrativeBlock();
+
+        if (snapshot.membership() == null) {
+            nullify();
+            return;
+        }
+        membershipId = snapshot.membership().membershipId();
+        planVersionId = snapshot.membership().planVersionId();
+
+        validFrom = snapshot.membership().validFrom();
+        validUntil = snapshot.membership().validUntil();
+
+        maxCopies = snapshot.membership().maxCopies();
+        maxDays = snapshot.membership().maxDays();
+    }
+
+    private void nullify() {
+        membershipId = null;
+        planVersionId = null;
+
+        validFrom = null;
+        validUntil = null;
+
+        maxCopies = null;
+        maxDays = null;
     }
 }

@@ -25,9 +25,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.project.library.TestcontainersConfiguration;
+import com.project.library.contracts.PatronEligibilityChanged;
+import com.project.library.contracts.PatronEligibilitySnapshot;
 
 import jakarta.persistence.EntityManager;
 
@@ -39,6 +43,7 @@ import jakarta.persistence.EntityManager;
     }
 )
 @Transactional 
+@RecordApplicationEvents 
 public class PatronServiceTests {
 
     @TestConfiguration 
@@ -54,6 +59,9 @@ public class PatronServiceTests {
     private final PatronRepository patronRepository;
     private final AdministrativeBlockHistoryRepository administrativeBlockHistoryRepository;
     private final EntityManager entityManager;
+
+    @Autowired 
+    private ApplicationEvents events;
 
     @Autowired 
     public PatronServiceTests(
@@ -179,6 +187,14 @@ public class PatronServiceTests {
         assertThat(record.getChangedAt()).isEqualTo(Instant.parse("2026-10-10T00:00:00Z"));
         assertThat(record.getActorIssuer()).isEqualTo("http://com.project.library/realms/library");
         assertThat(record.getActorSubject()).isEqualTo("staff-test-subject");
+
+        var published = events.stream(PatronEligibilityChanged.class).toList();
+
+        assertThat(published.size()).isEqualTo(1);
+        assertThat(published.get(0).snapshot()).isEqualTo(
+            new PatronEligibilitySnapshot(id, 1, true, null)
+        );
+        assertThat(published.get(0).metadata().occurredAt()).isEqualTo(record.getChangedAt());
     }
 
     @Test 
@@ -369,6 +385,25 @@ public class PatronServiceTests {
         assertThat(record2.get(0).getChangedAt()).isEqualTo(Instant.parse("2026-10-10T00:00:00Z"));
         assertThat(record2.get(0).getActorIssuer()).isEqualTo("http://com.project.library/realms/library");
         assertThat(record2.get(0).getActorSubject()).isEqualTo("staff-test-subject");
+
+        var published = events.stream(PatronEligibilityChanged.class).toList();
+
+        assertThat(published.size()).isEqualTo(2);
+        PatronEligibilityChanged blockRecord = published.stream().filter(r -> r.snapshot().sourceVersion() == 1).findFirst().orElseThrow();
+        PatronEligibilityChanged clearRecord = published.stream().filter(r -> r.snapshot().sourceVersion() == 2).findFirst().orElseThrow();
+
+        assertThat(blockRecord.snapshot()).isEqualTo(
+            new PatronEligibilitySnapshot(id, 1, true, null)
+        );
+        assertThat(blockRecord.metadata().occurredAt()).isEqualTo(record1.get(0).getChangedAt());
+
+        assertThat(clearRecord.snapshot()).isEqualTo(
+            new PatronEligibilitySnapshot(id, 2, false, null)
+        );
+        assertThat(clearRecord.metadata().occurredAt()).isEqualTo(record2.get(0).getChangedAt());
+
+        assertThat(blockRecord.metadata().eventId()).isNotEqualTo(clearRecord.metadata().eventId());
+        assertThat(blockRecord.metadata().context().correlationId()).isNotEqualTo(clearRecord.metadata().context().correlationId());
     }
 
     @Test 

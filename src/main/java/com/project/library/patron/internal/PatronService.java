@@ -1,6 +1,7 @@
 package com.project.library.patron.internal;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,16 +13,25 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.project.library.contracts.EventContext;
+
 @Service 
 public class PatronService {
 
     private final PatronRepository patronRepository;
     private final AdministrativeBlockHistoryRepository administrativeBlockHistoryRepository;
+    private final PatronEligibilityPublisher publisher;
     private Clock clock;
 
-    public PatronService(PatronRepository aPatronRepository, AdministrativeBlockHistoryRepository aAdministrativeBlockHistoryRepository, Clock aClock) {
+    public PatronService(
+        PatronRepository aPatronRepository,
+        AdministrativeBlockHistoryRepository aAdministrativeBlockHistoryRepository,
+        PatronEligibilityPublisher aPublisher,
+        Clock aClock
+    ) {
         patronRepository = aPatronRepository;
         administrativeBlockHistoryRepository = aAdministrativeBlockHistoryRepository;
+        publisher = aPublisher;
         clock = aClock;
     }
 
@@ -67,16 +77,22 @@ public class PatronService {
 
         patron.blockAdministratively(reason);
 
+        Instant occurredAt = clock.instant();
+
         AdministrativeBlockHistory history = new AdministrativeBlockHistory(
             patronId,
             AdministrativeBlockAction.BLOCKED,
             reason,
-            clock.instant(),
+            occurredAt,
             issuer,
             subject
         );
 
         administrativeBlockHistoryRepository.saveAndFlush(history);
+
+        EventContext context = new EventContext(UUID.randomUUID(), null, null, false);
+
+        publisher.publish(patron, occurredAt, context);
     }
 
     @Transactional 
@@ -96,16 +112,22 @@ public class PatronService {
 
         patron.clearAdministrativeBlock();
 
+        Instant occurredAt = clock.instant();
+
         AdministrativeBlockHistory history = new AdministrativeBlockHistory(
             patronId,
             AdministrativeBlockAction.CLEARED,
             reason,
-            clock.instant(),
+            occurredAt,
             issuer,
             subject
         );
 
         administrativeBlockHistoryRepository.saveAndFlush(history);
+
+        EventContext context = new EventContext(UUID.randomUUID(), null, null, false);
+
+        publisher.publish(patron, occurredAt, context);
     }
 
     private JwtAuthenticationToken getJwtToken() {

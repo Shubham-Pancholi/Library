@@ -20,13 +20,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 
 import com.project.library.TestcontainersConfiguration;
+import com.project.library.contracts.PatronEligibilityChanged;
+import com.project.library.contracts.PatronEligibilitySnapshot;
 
 import jakarta.persistence.EntityManager;
 
 @SpringBootTest 
 @Import (TestcontainersConfiguration.class)
+@RecordApplicationEvents 
 public class PatronBlockTransactionTests {
 
     @Autowired 
@@ -37,6 +42,9 @@ public class PatronBlockTransactionTests {
 
     @Autowired 
     private EntityManager entityManager;
+
+    @Autowired 
+    private ApplicationEvents events;
 
     @MockitoSpyBean 
     private AdministrativeBlockHistoryRepository historyRepository;
@@ -86,6 +94,8 @@ public class PatronBlockTransactionTests {
             }
 
             assertThat(patronHistory.size()).isEqualTo(0);
+
+            assertThat(events.stream(PatronEligibilityChanged.class).toList()).isEmpty();
         }
         finally {
             SecurityContextHolder.clearContext();
@@ -156,6 +166,16 @@ public class PatronBlockTransactionTests {
             assertThat(record.getId()).isEqualTo(history);
             assertThat(record.getAction()).isEqualTo(AdministrativeBlockAction.BLOCKED);
             assertThat(record.getReason()).isEqualTo("Reason A");
+
+            List<PatronEligibilityChanged> publishedEvents = events.stream(PatronEligibilityChanged.class).toList();
+
+            assertThat(publishedEvents.size()).isEqualTo(1);
+
+            var publishedEvent = publishedEvents.get(0);
+
+            assertThat(publishedEvent.snapshot()).isEqualTo(
+                new PatronEligibilitySnapshot(patronId, 1, true, null)
+            );
         }
         finally {
             SecurityContextHolder.clearContext();
